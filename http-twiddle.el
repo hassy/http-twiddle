@@ -119,12 +119,16 @@ length."
       (insert "\r"))))
 
 (defun http-twiddle-expand-content-length ()
-  "Replace any occurences of $Content-Length with the actual Content-Length."
+  "Replace any occurences of $Content-Length with the actual Content-Length. Insert one if needed."
   (save-excursion
     (goto-char (point-min))
     (let ((content-length
            (save-excursion (when (search-forward "\r\n\r\n" nil t)
                              (- (point-max) (point))))))
+      (save-excursion
+        (goto-char (- (point-max) content-length 2))
+        (insert "Content-Length: $Content-Length\r\n"))
+
       (unless (null content-length)
         (let ((case-fold-search t))
           (while (search-forward "$content-length" nil t)
