@@ -3,6 +3,9 @@
 ;; Version 1.0 written by Luke Gorrie <luke@synap.se> in February 2006
 ;; This program belongs to the public domain.
 ;;
+;; Extended and maintained by Hasan Veldstra <hassy@12monkeys.co.uk>
+;; <http://github.com/hassy/http-twiddle/tree/master>
+;;
 ;; This is a program for testing hand-written HTTP requests. You write
 ;; your request in an Emacs buffer (using http-twiddle-mode) and then
 ;; press `C-c C-c' each time you want to try sending it to the server.
