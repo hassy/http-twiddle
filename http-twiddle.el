@@ -125,14 +125,23 @@ length."
     (let ((content-length
            (save-excursion (when (search-forward "\r\n\r\n" nil t)
                              (- (point-max) (point))))))
-      (save-excursion
-        (goto-char (- (point-max) content-length 2))
-        (insert "Content-Length: $Content-Length\r\n"))
+      
+      (let ((got-content-length-already
+             (save-excursion
+               (goto-char (point-min))
+               (let ((case-fold-search t))
+                 (when (search-forward "content-length" (- (point-max) content-length 2) t)
+                   t)))))
+
+        (unless got-content-length-already
+          (save-excursion
+            (goto-char (- (point-max) content-length 2))
+            (insert "Content-Length: $Content-Length\r\n")))
 
       (unless (null content-length)
         (let ((case-fold-search t))
           (while (search-forward "$content-length" nil t)
-            (replace-match (format "%d" content-length) nil t)))))))
+            (replace-match (format "%d" content-length) nil t))))))))
 
 (defun http-twiddle-process-filter (process string)
   "Process data from the socket by inserting it at the end of the buffer."
