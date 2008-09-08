@@ -99,16 +99,25 @@ length."
           (set-mark (point)))))))
 
 (defun http-twiddle-read-endpoint ()
-  "Return the endpoint (HOST PORT) to send the request to."
-  (if (and http-twiddle-endpoint (null current-prefix-arg))
-      http-twiddle-endpoint
-    (setq http-twiddle-endpoint
-          (list (read-string "Host: (default localhost) "
-                             nil 'http-twiddle-host-history "localhost")
-                (let ((input (read-from-minibuffer "Port: " nil nil t 'http-twiddle-port-history)))
-                  (if (integerp input)
-                      input
-                    (error "Not an integer: %S" input)))))))
+  "Return the endpoint (HOST PORT) to send the request to.
+   Uses values specified in Host header, or prompts if it's not written out."
+
+  (let ((rx "\\(^Host: \\)\\([^\r]+\\)")
+        (str (buffer-string)))
+    (if (null (string-match rx str))
+        ;; ask
+        (setq http-twiddle-endpoint
+              (list (read-string "Host: (default localhost) "
+                                 nil 'http-twiddle-host-history "localhost")
+                    (let ((input (read-from-minibuffer "Port: " nil nil t 'http-twiddle-port-history)))
+                      (if (integerp input)
+                          input
+                        (error "Not an integer: %S" input)))))
+      ;; try to parse headers
+      (let ((tokens (split-string (match-string 2 str) ":")))
+        (if (= (length tokens) 1)
+            (list (car tokens) 80)
+          (list (car tokens) (string-to-number (car (cdr tokens)))))))))
 
 (defun http-twiddle-convert-cr-to-crlf ()
   "Convert \\n linebreaks to \\r\\n in the whole buffer."
@@ -125,7 +134,7 @@ length."
     (let ((content-length
            (save-excursion (when (search-forward "\r\n\r\n" nil t)
                              (- (point-max) (point))))))
-      
+
       (let ((got-content-length-already
              (save-excursion
                (goto-char (point-min))
@@ -138,17 +147,17 @@ length."
             (goto-char (- (point-max) content-length 2))
             (insert "Content-Length: $Content-Length\r\n")))
 
-      (unless (null content-length)
-        (let ((case-fold-search t))
-          (while (search-forward "$content-length" nil t)
-            (replace-match (format "%d" content-length) nil t))))))))
+        (unless (null content-length)
+          (let ((case-fold-search t))
+            (while (search-forward "$content-length" nil t)
+              (replace-match (format "%d" content-length) nil t))))))))
 
 (defun http-twiddle-process-filter (process string)
   "Process data from the socket by inserting it at the end of the buffer."
   (with-current-buffer (process-buffer process)
     (goto-char (point-max))
     (insert string)))
-    
+
 (defun http-twiddle-process-sentinel (process what)
   (with-current-buffer (process-buffer process)
     (goto-char (point-max))
