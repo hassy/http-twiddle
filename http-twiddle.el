@@ -102,7 +102,7 @@ length."
   "Return the endpoint (HOST PORT) to send the request to.
    Uses values specified in Host header, or prompts if it's not written out."
 
-  (let ((rx "\\(^Host: \\)\\([^\r]+\\)")
+  (let ((rx "\\(^Host: \\)\\([^\r\n]+\\)")
         (str (buffer-string)))
     (if (null (string-match rx str))
         ;; ask
