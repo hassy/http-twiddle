@@ -1,0 +1,6 @@
+POST / HTTP/1.1
+Host: localhost
+Content-Type: text/xml
+Connection: close
+
+<user><name>Bob</name><email>bob@example.com</email></user>
