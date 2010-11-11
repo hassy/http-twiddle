@@ -1,10 +1,16 @@
 ;;; http-twiddle.el -- send & twiddle & resend HTTP requests
-;;
-;; Version 1.0 written by Luke Gorrie <luke@synap.se> in February 2006
+
 ;; This program belongs to the public domain.
-;;
-;; Extended and maintained by Hasan Veldstra <hassy@12monkeys.co.uk>
-;; <http://github.com/hassy/http-twiddle/tree/master>
+
+;; Author: Luke Gorrie <luke@synap.se>
+;; Maintainer: Hasan Veldstra <h@vidiowiki.com>
+;; Created: 1 Feb 2006
+;; Adapted-By: Hasan Veldstra
+;; Version: 1.0
+;; URL: https://github.com/hassy/http-twiddle/blob/master/http-twiddle.el
+;; Keywords: HTTP, REST, SOAP
+
+;;; Commentary:
 ;;
 ;; This is a program for testing hand-written HTTP requests. You write
 ;; your request in an Emacs buffer (using http-twiddle-mode) and then
@@ -26,14 +32,16 @@
 ;; `M-x http-twiddle-mode-demo' for a simple get-started example.
 ;;
 ;; Tested with GNU Emacs 21.4.1 and not tested/ported on XEmacs yet.
-
-;;; Example buffer:
-
+;;
+;; Example buffer:
+;;
 ;; POST / HTTP/1.0
 ;; Connection: close
 ;; Content-Length: $Content-Length
 ;;
-;; The request body goes here
+;; <The request body goes here>
+
+;;; Code:
 
 (require 'font-lock)                    ; faces
 
@@ -175,3 +183,4 @@ length."
 
 (provide 'http-twiddle)
 
+;;; http-twiddle.el ends here
