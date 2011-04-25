@@ -57,7 +57,7 @@
   (require 'cl))
 
 (define-minor-mode http-twiddle-mode
-  "Major mode for twiddling around with HTTP requests and sending them.
+  "Minor mode for twiddling around with HTTP requests and sending them.
 Use `http-twiddle-mode-send' (\\[http-twiddle-mode-send]) to send the request."
   nil
   " http-twiddle"
