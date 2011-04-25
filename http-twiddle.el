@@ -84,8 +84,13 @@ occurences of \"$Content-Length\" are replaced with the actual content
 length."
   (interactive (http-twiddle-read-endpoint))
   ;; close any old connection
-  (when http-twiddle-process
-    (kill-buffer (process-buffer http-twiddle-process)))
+  (when (and http-twiddle-process
+             (buffer-live-p (process-buffer http-twiddle-process)))
+    (with-current-buffer (process-buffer http-twiddle-process)
+      (let ((inhibit-read-only t))
+        (widen)
+        (delete-region (point-min) (point-max)))))
+
   (let ((content (buffer-string)))
     (with-temp-buffer
       (insert content)
