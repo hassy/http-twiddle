@@ -45,6 +45,11 @@
 
 (require 'font-lock)                    ; faces
 
+(defgroup http-twiddle nil
+  "HTTP Request Twiddling"
+  :prefix "http-twiddle"
+  :group 'communication)
+
 (eval-when-compile
   (unless (fboundp 'define-minor-mode)
     (require 'easy-mmode)
@@ -58,8 +63,10 @@ Use `http-twiddle-mode-send' (\\[http-twiddle-mode-send]) to send the request."
   " http-twiddle"
   '(("\C-c\C-c" . http-twiddle-mode-send)))
 
-(defvar http-twiddle-show-request t
-  "*Show the request in the transcript.")
+(defcustom http-twiddle-show-request t
+  "*Show the request in the transcript."
+  :type '(boolean)
+  :group 'http-twiddle)
 
 (add-to-list 'auto-mode-alist '("\\.http-twiddle$" . http-twiddle-mode))
 
