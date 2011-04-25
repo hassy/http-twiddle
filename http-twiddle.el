@@ -84,14 +84,20 @@ occurences of \"$Content-Length\" are replaced with the actual content
 length."
   (interactive (http-twiddle-read-endpoint))
   ;; close any old connection
-  (when http-twiddle-process
-    (kill-buffer (process-buffer http-twiddle-process)))
+  (when (and http-twiddle-process
+             (buffer-live-p (process-buffer http-twiddle-process)))
+    (with-current-buffer (process-buffer http-twiddle-process)
+      (let ((inhibit-read-only t))
+        (widen)
+        (delete-region (point-min) (point-max)))))
+
   (let ((content (buffer-string)))
     (with-temp-buffer
       (insert content)
       (http-twiddle-convert-cr-to-crlf)
       (http-twiddle-expand-content-length)
-      (let ((request (buffer-string)))
+      (let ((request (buffer-string))
+            (inhibit-read-only t))
         (setq http-twiddle-process
               (open-network-stream "http-twiddle" "*HTTP Twiddle*" host port))
         (set-process-filter http-twiddle-process 'http-twiddle-process-filter)
@@ -99,11 +105,13 @@ length."
         (process-send-string http-twiddle-process request)
         (save-selected-window
           (pop-to-buffer (process-buffer http-twiddle-process))
+          (setq buffer-read-only t)
+          (let ((inhibit-read-only t))
           (when http-twiddle-show-request
             (insert request)
             (set-window-start (selected-window) (point))
             (add-text-properties (point-min) (point-max)
-                                 '(face font-lock-comment-face)))
+                                 '(face font-lock-comment-face))))
           (set-mark (point)))))))
 
 (defun http-twiddle-read-endpoint ()
@@ -163,15 +171,18 @@ length."
 (defun http-twiddle-process-filter (process string)
   "Process data from the socket by inserting it at the end of the buffer."
   (with-current-buffer (process-buffer process)
-    (goto-char (point-max))
-    (insert string)))
+    (let ((inhibit-read-only t))
+      (goto-char (point-max))
+      (insert string))))
 
 (defun http-twiddle-process-sentinel (process what)
   (with-current-buffer (process-buffer process)
     (goto-char (point-max))
-    (let ((start (point)))
-      (insert "Connection closed\n")
-      (add-text-properties start (point) '(face font-lock-string-face)))))
+    (let ((start (point))
+          (inhibit-read-only t))
+      (insert "\nConnection closed\n")
+      (add-text-properties start (point) '(face font-lock-string-face))
+      (set-buffer-modified-p nil))))
 
 (defun http-twiddle-mode-demo ()
   (interactive)
