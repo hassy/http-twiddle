@@ -84,6 +84,28 @@ Use `http-twiddle-mode-send' (\\[http-twiddle-mode-send]) to send the request."
   "History of port arguments entered in the minibuffer.
 \(To make XEmacs happy.)")
 
+(defconst http-twiddle-font-lock-keywords
+  (list
+   '("^X-[a-zA-Z0-9-]+:" . font-lock--face)
+   '("^[a-zA-Z0-9-]+:" . font-lock-keyword-face)
+   '("HTTP/1.[01] [45][0-9][0-9] .*" . font-lock-warning-face)
+   '("HTTP/1.[01] [23][0-9][0-9] .*" . font-lock-type-face)
+   '("HTTP/1.[01]?$" . font-lock-constant-face)
+   (cons (regexp-opt '("GET" "POST" "HEAD" "PUT" "DELETE" "TRACE" "CONNECT"))
+         font-lock-constant-face))
+  "Keywords to highlight in http-twiddle-response-mode.")
+
+(defconst http-twiddle-response-mode-map
+  (make-sparse-keymap)
+  "Keymap for http-twiddle-response-mode.")
+
+(define-generic-mode http-twiddle-response-mode
+  nil nil http-twiddle-font-lock-keywords
+  nil
+  '((lambda ()
+      (use-local-map http-twiddle-response-mode-map)))
+  "Major mode for interacting with HTTP responses.")
+
 (defun http-twiddle-mode-send (host port)
   "Send the current buffer to the server.
 Linebreaks are automatically converted to CRLF (\\r\\n) format and any
@@ -100,6 +122,8 @@ length."
 
   (let ((content (buffer-string)))
     (with-temp-buffer
+      (set (make-variable-buffer-local 'font-lock-keywords)
+           http-twiddle-font-lock-keywords)
       (insert content)
       (http-twiddle-convert-cr-to-crlf)
       (http-twiddle-expand-content-length)
@@ -112,13 +136,13 @@ length."
         (process-send-string http-twiddle-process request)
         (save-selected-window
           (pop-to-buffer (process-buffer http-twiddle-process))
+          (unless (eq major-mode 'http-twiddle-response-mode)
+            (http-twiddle-response-mode))
           (setq buffer-read-only t)
           (let ((inhibit-read-only t))
           (when http-twiddle-show-request
             (insert request)
-            (set-window-start (selected-window) (point))
-            (add-text-properties (point-min) (point-max)
-                                 '(face font-lock-comment-face))))
+            (set-window-start (selected-window) (point))))
           (set-mark (point)))))))
 
 (defun http-twiddle-read-endpoint ()
@@ -188,7 +212,6 @@ length."
     (let ((start (point))
           (inhibit-read-only t))
       (insert "\nConnection closed\n")
-      (add-text-properties start (point) '(face font-lock-string-face))
       (set-buffer-modified-p nil))))
 
 (defun http-twiddle-mode-demo ()
