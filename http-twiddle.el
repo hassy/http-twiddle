@@ -110,7 +110,8 @@ Use `http-twiddle-mode-send' (\\[http-twiddle-mode-send]) to send the request."
   "Send the current buffer to the server.
 Linebreaks are automatically converted to CRLF (\\r\\n) format and any
 occurences of \"$Content-Length\" are replaced with the actual content
-length."
+length. Any elisp code between $|...code...| is evaluated and the match
+is substituted with the evaluated value formatted as string."
   (interactive (http-twiddle-read-endpoint))
   ;; close any old connection
   (when (and http-twiddle-process
@@ -125,6 +126,7 @@ length."
       (set (make-variable-buffer-local 'font-lock-keywords)
            http-twiddle-font-lock-keywords)
       (insert content)
+      (http-twiddle-expand-template)
       (http-twiddle-convert-cr-to-crlf)
       (http-twiddle-expand-content-length)
       (let ((request (buffer-string))
@@ -199,6 +201,15 @@ length."
             (while (search-forward "$content-length" nil t)
               (replace-match (format "%d" content-length) nil t))))))))
 
+(defun http-twiddle-expand-template ()  
+  "Replace any occurences of $|...code...| with the evaluation of ...code..."
+  (interactive)
+  (save-excursion
+    (goto-char (point-min))
+    (while (re-search-forward "\\$|[^|]+|" nil t)
+      (let ((d (substring-no-properties (match-string 0) 2)))
+	(replace-match (format "%s" (eval (car (read-from-string d)))))))))
+      
 (defun http-twiddle-process-filter (process string)
   "Process data from the socket by inserting it at the end of the buffer."
   (with-current-buffer (process-buffer process)
