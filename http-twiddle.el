@@ -1,4 +1,4 @@
-;;; http-twiddle.el -- send & twiddle & resend HTTP requests
+;;; http-twiddle.el --- send & twiddle & resend HTTP requests
 
 ;; This program belongs to the public domain.
 
