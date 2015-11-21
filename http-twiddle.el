@@ -123,7 +123,7 @@ is substituted with the evaluated value formatted as string."
 
   (let ((content (buffer-string)))
     (with-temp-buffer
-      (set (make-variable-buffer-local 'font-lock-keywords)
+      (set (make-local-variable 'font-lock-keywords)
            http-twiddle-font-lock-keywords)
       (insert content)
       (http-twiddle-expand-template)
