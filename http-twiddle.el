@@ -68,6 +68,11 @@ Use `http-twiddle-mode-send' (\\[http-twiddle-mode-send]) to send the request."
   :type '(boolean)
   :group 'http-twiddle)
 
+(defcustom http-twiddle-tls nil
+  "Use a TLS (https) connection instead of regular http, and default to port 443 instead of 80."
+  :type '(boolean)
+  :group 'http-twiddle)
+
 (add-to-list 'auto-mode-alist '("\\.http-twiddle$" . http-twiddle-mode))
 
 (defvar http-twiddle-endpoint nil
@@ -106,6 +111,12 @@ Use `http-twiddle-mode-send' (\\[http-twiddle-mode-send]) to send the request."
       (use-local-map http-twiddle-response-mode-map)))
   "Major mode for interacting with HTTP responses.")
 
+(defun http-twiddle-connection-type ()
+  "The type of network connection, either 'plain or 'tls."
+  (if http-twiddle-tls
+      'tls
+    'plain))
+
 (defun http-twiddle-mode-send (host port)
   "Send the current buffer to the server.
 Linebreaks are automatically converted to CRLF (\\r\\n) format and any
@@ -132,7 +143,7 @@ is substituted with the evaluated value formatted as string."
       (let ((request (buffer-string))
             (inhibit-read-only t))
         (setq http-twiddle-process
-              (open-network-stream "http-twiddle" "*HTTP Twiddle*" host port))
+              (open-network-stream "http-twiddle" "*HTTP Twiddle*" host port :type (http-twiddle-connection-type)))
         (set-process-filter http-twiddle-process 'http-twiddle-process-filter)
         (set-process-sentinel http-twiddle-process 'http-twiddle-process-sentinel)
         (process-send-string http-twiddle-process request)
@@ -146,6 +157,13 @@ is substituted with the evaluated value formatted as string."
             (insert request)
             (set-window-start (selected-window) (point))))
           (set-mark (point)))))))
+
+(defun http-twiddle-default-port ()
+  "The port to connect to on the server, if no port is specified. Uses 80 or
+   443, depending on http-twiddle-tls"
+  (if http-twiddle-tls
+      443
+    80))
 
 (defun http-twiddle-read-endpoint ()
   "Return the endpoint (HOST PORT) to send the request to.
@@ -165,7 +183,7 @@ is substituted with the evaluated value formatted as string."
       ;; try to parse headers
       (let ((tokens (split-string (match-string 2 str) ":")))
         (if (= (length tokens) 1)
-            (list (car tokens) 80)
+            (list (car tokens) (http-twiddle-default-port))
           (list (car tokens) (string-to-number (car (cdr tokens)))))))))
 
 (defun http-twiddle-convert-cr-to-crlf ()
