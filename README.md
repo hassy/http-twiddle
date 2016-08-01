@@ -40,6 +40,6 @@ If the Content-Length header is not written out (like in the examples below) it'
 
 Version 1.0 was written by Luke Gorrie <luke@synap.se> in February 2006 and released to the public domain.
 
-Extended and maintained by Hasan Veldstra <hasan.veldstra@gmail.com> since September 2008.
+Maintained by Hasan Veldstra <h@veldstra.org> and [contributors](https://github.com/hassy/http-twiddle/graphs/contributors) since September 2008.
 
 Homepage: <http://github.com/hassy/http-twiddle/tree/master>
