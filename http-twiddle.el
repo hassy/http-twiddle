@@ -117,6 +117,12 @@ Use `http-twiddle-mode-send' (\\[http-twiddle-mode-send]) to send the request."
       'tls
     'plain))
 
+(defun http-twiddle-hide-dos-eol ()
+  "Do not show ^M in files containing mixed UNIX and DOS line endings."
+  (if (not buffer-display-table)
+      (setq buffer-display-table (make-display-table)))
+  (aset buffer-display-table ?\^M []))
+
 (defun http-twiddle-mode-send (host port)
   "Send the current buffer to the server.
 Linebreaks are automatically converted to CRLF (\\r\\n) format and any
@@ -147,6 +153,8 @@ is substituted with the evaluated value formatted as string."
         (set-process-filter http-twiddle-process 'http-twiddle-process-filter)
         (set-process-sentinel http-twiddle-process 'http-twiddle-process-sentinel)
         (process-send-string http-twiddle-process request)
+        (with-current-buffer (process-buffer http-twiddle-process)
+          (http-twiddle-hide-dos-eol))
         (save-selected-window
           (pop-to-buffer (process-buffer http-twiddle-process))
           (unless (eq major-mode 'http-twiddle-response-mode)
@@ -219,7 +227,7 @@ is substituted with the evaluated value formatted as string."
             (while (search-forward "$content-length" nil t)
               (replace-match (format "%d" content-length) nil t))))))))
 
-(defun http-twiddle-expand-template ()  
+(defun http-twiddle-expand-template ()
   "Replace any occurences of $|...code...| with the evaluation of ...code..."
   (interactive)
   (save-excursion
@@ -227,7 +235,7 @@ is substituted with the evaluated value formatted as string."
     (while (re-search-forward "\\$|[^|]+|" nil t)
       (let ((d (substring-no-properties (match-string 0) 2)))
 	(replace-match (format "%s" (eval (car (read-from-string d)))))))))
-      
+
 (defun http-twiddle-process-filter (process string)
   "Process data from the socket by inserting it at the end of the buffer."
   (with-current-buffer (process-buffer process)
