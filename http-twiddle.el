@@ -236,9 +236,42 @@ is substituted with the evaluated value formatted as string."
       (let ((d (substring-no-properties (match-string 0) 2)))
 	(replace-match (format "%s" (eval (car (read-from-string d)))))))))
 
+(defun http-twiddle--mime-charset->coding-system (mime-charset)
+  "Convert a MIME standard charset name like UTF-8 or
+   ISO-8859-1 (a string) into an Emacs coding system
+   name (Symbol). Based on
+   epa--find-coding-system-for-mime-charset"
+  (let ((mime-charset (intern (downcase mime-charset))))
+    (if (featurep 'xemacs)
+        (if (fboundp 'find-coding-system)
+            (find-coding-system mime-charset))
+      ;; Find the first coding system which corresponds to MIME-CHARSET.
+      (let ((pointer (coding-system-list)))
+        (while (and pointer
+                    (not (eq (coding-system-get (car pointer) 'mime-charset)
+                             mime-charset)))
+          (setq pointer (cdr pointer)))
+        (car pointer)))))
+
+(defun http-twiddle-change-coding-system (encoding)
+  "Change the encoding of the process and output buffer once we
+   figure out what it's supposed to be."
+  (with-current-buffer (process-buffer http-twiddle-process)
+    (set-buffer-process-coding-system encoding encoding)
+    (set-buffer-file-coding-system encoding)))
+
 (defun http-twiddle-process-filter (process string)
-  "Process data from the socket by inserting it at the end of the buffer."
+  "Process data from the socket by inserting it at the end of the
+   buffer. If this encounters a Content-Type header it will set the
+   buffer's encoding accordingly"
   (with-current-buffer (process-buffer process)
+    (when (string-match "Content-Type:[^\n]*charset=\\([^\r]*\\)\\(\r\\|\\)" string)
+      (let* ((mime-encoding (match-string 1 string))
+             (coding-system (http-twiddle--mime-charset->coding-system mime-encoding)))
+        (http-twiddle-change-coding-system coding-system)
+        ;; This chunk of output might already contain non-US-ASCII characters,
+        ;; which emacs will have decoded incorrectly, so reinterpret them
+        (setq string (decode-coding-string string coding-system))))
     (let ((inhibit-read-only t))
       (goto-char (point-max))
       (insert string))))
