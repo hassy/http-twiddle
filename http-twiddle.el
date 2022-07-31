@@ -111,6 +111,14 @@ Use `http-twiddle-mode-send' (\\[http-twiddle-mode-send]) to send the request."
       (use-local-map http-twiddle-response-mode-map)))
   "Major mode for interacting with HTTP responses.")
 
+(defun http-twiddle-tls-toggle ()
+  "Toggle TLS (https) on and off."
+  (interactive)
+  (setq http-twiddle-tls (not http-twiddle-tls))
+  (message (if http-twiddle-tls
+	       "http-twiddle TLS (https) on"
+	     "http-twiddle TLS (https) off")))
+
 (defun http-twiddle-connection-type ()
   "The type of network connection, either 'plain or 'tls."
   (if http-twiddle-tls
